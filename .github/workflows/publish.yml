@@ -1,0 +1,32 @@
+name: Publish to GitHub Packages
+
+# Mirrors the tagging convention in rtm-docs/00-governance/git-conventions.md: each repo versions
+# independently with SemVer, and a release is a `vX.Y.Z` tag pushed to origin.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          # Writes ~/.m2/settings.xml with a <server id="github"> entry using these two env vars,
+          # matching the <repository id="github"> in pom.xml's <distributionManagement>.
+          server-id: github
+
+      - name: Publish package
+        run: mvn --batch-mode deploy -DskipTests
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
